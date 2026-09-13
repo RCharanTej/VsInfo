@@ -86,6 +86,9 @@ model = None
 if os.path.exists(MODEL_PATH):
     print(f"🤖 Loading AI Model from {MODEL_PATH}")
     try:
+        import torch
+        torch.set_num_threads(1)
+        torch.set_grad_enabled(False)
         model = YOLO(MODEL_PATH)
     except Exception as e:
         print(f"❌ Error loading YOLO model: {e}")
@@ -251,6 +254,19 @@ async def analyze_image(
     with open(file_save_path, "wb") as f:
         f.write(contents)
 
+    # Downscale large images to max 1024x1024 to prevent OOM crash on Render Free (512MB RAM)
+    try:
+        from PIL import Image
+        with Image.open(file_save_path) as im:
+            if im.width > 1024 or im.height > 1024:
+                im.thumbnail((1024, 1024))
+                if im.mode in ("RGBA", "P"):
+                    im = im.convert("RGB")
+                im.save(file_save_path, format="JPEG", quality=85)
+            image_shape = (im.height, im.width)
+    except Exception as e:
+        image_shape = (640, 640)
+
     # 4. Construct accessible web URL
     base_url = str(request.base_url).rstrip("/")
     image_url = f"{base_url}/uploads/{unique_filename}"
@@ -267,19 +283,31 @@ async def analyze_image(
             # lower detector score than compact component defects. Keep a low
             # candidate threshold, then send every candidate for review rather
             # than treating a weak/no detection as a verified pass.
-            results = model.predict(source=file_save_path, conf=0.10)
-            for r in results:
-                for box in r.boxes:
-                    cls_id = int(box.cls[0])
-                    class_name = model.names[cls_id] if hasattr(model, 'names') else f"Defect_{cls_id}"
-                    confidence = float(box.conf[0])
-                    coords = box.xyxy[0].tolist()
+            import torch
+            with torch.inference_mode():
+                results = model.predict(
+                    source=file_save_path,
+                    conf=0.10,
+                    imgsz=640,
+                    device="cpu",
+                    max_det=30,
+                    verbose=False
+                )
+                for r in results:
+                    for box in r.boxes:
+                        cls_id = int(box.cls[0])
+                        class_name = model.names[cls_id] if hasattr(model, 'names') else f"Defect_{cls_id}"
+                        confidence = float(box.conf[0])
+                        coords = box.xyxy[0].tolist()
 
-                    detections.append({
-                        "class": class_name,
-                        "confidence": round(confidence, 4),
-                        "bbox": [round(c, 2) for c in coords],
-                    })
+                        detections.append({
+                            "class": class_name,
+                            "confidence": round(confidence, 4),
+                            "bbox": [round(c, 2) for c in coords],
+                        })
+                del results
+                import gc
+                gc.collect()
 
         except Exception as e:
             print(f"Error during model inference: {e}")
@@ -300,8 +328,9 @@ async def analyze_image(
     defects_detected = len(detections)
     top_confidence = max((d["confidence"] for d in detections), default=0.0)
 
-    img = cv2.imread(file_save_path)
-    image_shape = (img.shape[0], img.shape[1]) if img is not None else (1, 1)
+    if 'image_shape' not in locals():
+        img = cv2.imread(file_save_path)
+        image_shape = (img.shape[0], img.shape[1]) if img is not None else (1, 1)
 
     for detection in detections:
         score, level, area_percent = score_detection(
