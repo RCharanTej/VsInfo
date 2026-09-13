@@ -62,6 +62,9 @@ backend/yolov8n.pt
 backend/models/*.pt
 backend/models/*.pth
 backend/models/*.onnx
+# Allow fine-tuned weights in backend/models (6.2 MB - well under GitHub's 100 MB limit)
+!backend/models/best.pt
+!backend/models/last.pt
 
 # Training runs & checkpoints
 runs/
