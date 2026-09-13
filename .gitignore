@@ -1,0 +1,114 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Node & Next.js frontend
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+frontend/out/
+dist/
+frontend/dist/
+.turbo/
+frontend/.turbo/
+*.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+
+# Build logs & caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pytest_cache/
+.mypy_cache/
+.cache/
+frontend/.cache/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+vision_inspect.db
+backend/vision_inspect.db
+
+# Large Machine Learning Models & Weights
+*.pt
+*.pth
+*.pwf
+*.weights
+*.onnx
+*.tflite
+*.model
+*.bin
+*.h5
+*.engine
+yolov8n.pt
+backend/yolov8n.pt
+backend/models/*.pt
+backend/models/*.pth
+backend/models/*.onnx
+
+# Training runs & checkpoints
+runs/
+backend/runs/
+wandb/
+
+# Datasets and compressed archives
+# Keeps dataset/dataset.yaml configuration, but ignores raw images, labels, and external archives
+dataset/images/
+dataset/labels/
+dataset/external/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.bz2
+*.xz
+*.rar
+*.7z
+
+# Uploaded inspection media & generated reports
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/reports/generated/
+backend/reports/*.json
+backend/reports/*.csv
+backend/reports/*.pdf
+backend/reports/*.xlsx
+
+# Environment variables & secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# IDE and Operating System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and staging helper folders
+.git-push-staging/
+.tmp/
+tmp/
+__MACOSX/
+coverage/
+htmlcov/
